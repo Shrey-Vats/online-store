@@ -8,11 +8,11 @@ import { ParamsId } from "@/types/auth.type";
 import prisma from "@/utils/db";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(req: NextRequest, { params }: ParamsId) {
+export async function GET({ params }: ParamsId) {
   const productId = params.id;
 
   try {
-    const product = prisma.product.findUnique({
+    const product = await prisma.product.findUnique({
       where: { id: productId },
     });
 
@@ -20,6 +20,7 @@ export async function GET(req: NextRequest, { params }: ParamsId) {
       {
         message: "Product detailed send successfuly",
         success: true,
+        data: product
       },
       { status: 200 }
     );
@@ -36,25 +37,47 @@ export async function GET(req: NextRequest, { params }: ParamsId) {
 }
 
 export async function PUT(req: NextRequest, { params }: ParamsId) {
-  const productId = params.id;
+  const productId = await params.id;
   const body = await req.json();
 
+  const result = productSchema.partial().safeParse(body);
+ if (!result.success) {
+      return NextResponse.json(
+        {
+          message: result.error.issues[0].message,
+          success: false,
+        },
+        { status: 400 }
+      );
+    }
+  
   const { title, description, price, quantity } = body;
-  const result = productSchema.safeParse(body);
-
-  if (!result.success) {
-    return NextResponse.json(
-      {
-        message: result.error.message[0],
-        success: false,
-      },
-      { status: 400 }
-    );
-  }
 
   const product = prisma.product.findUnique({
     where: { id: productId },
   });
+
+  if(!product){
+     return NextResponse.json(
+        {
+          message: "Product do not exits",
+          success: false,
+        },
+        { status: 400 }
+      );
+  }
+
+  let updatedValue: {
+    title?: string;
+    description?: string;
+    price?: number;
+    quantity?: number;
+  } = {};
+
+  if(title !== undefined) updatedValue.title = title
+  if(description !== undefined) updatedValue.description = description
+  if(price !== undefined) updatedValue.price = price
+  if(quantity !== undefined) updatedValue.quantity = quantity
 
   const UpdatedProduct = prisma.product.update({
     where: { id: productId },
@@ -76,9 +99,9 @@ export async function PUT(req: NextRequest, { params }: ParamsId) {
   );
 }
 
-export async function DELECT(req: NextRequest, { params }: ParamsId) {
+export async function DELECT({ params }: ParamsId) {
   try {
-    const productId = params.id;
+    const productId = await params.id;
 
     const product = await prisma.product.findUnique({
       where: { id: productId },

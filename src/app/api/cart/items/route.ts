@@ -6,24 +6,33 @@ DELETE /cart/items/:id → remove product from cart
 
 import { jwtItems } from "@/types/auth.type";
 import prisma from "@/utils/db";
+import jwt from "jsonwebtoken"
 import { NextRequest, NextResponse } from "next/server";
-import { POST } from "../route";
 
-export default async function (req: NextRequest) {  
-    try {
-      const body = await req.json();
-      const { productId } = body;
-    
-      const userDetails: jwtItems = JSON.parse(req.headers.get("user")!);
-    
+export async function POST(req: NextRequest) {  
+  try {
+   const SECRET = process.env.SECRET || "";
+   const token = req.cookies.get("token")?.value;
+           
+   const {productId} = await req.json()
+
+     if (!token) {
+       return NextResponse.json(
+         { message: "Unauthorized: No token provided", success: false },
+         { status: 401 }
+       );
+     }
+
+       const user = jwt.verify(token, SECRET) as { id: string; [key: string]: any };
+   
       let cart = await prisma.cart.findFirst({
-        where: { userId: userDetails.id },
+        where: { userId: user.id },
       });
     
       if (!cart) {
         cart = await prisma.cart.create({
           data: {
-            userId: userDetails.id,
+            userId: user.id,
           },
         });
       }
@@ -35,7 +44,7 @@ export default async function (req: NextRequest) {
         }
       })
     
-      NextResponse.json({
+      return NextResponse.json({
         message: "Item added successfuly",
         success: true,
         data: cartItem
@@ -44,7 +53,7 @@ export default async function (req: NextRequest) {
 
   } catch (error) {
     console.error(error);
-    NextResponse.json({
+    return NextResponse.json({
         message: "Internal Server error",
         success: false
     }, {status: 500})

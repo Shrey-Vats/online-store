@@ -16,6 +16,6 @@ export const productSchema = z.object({
     title:  z.string().min(8, {message: "title must be atleast 9 cherecter long"}),
     description: z.string(),
     images: z.string().array(),
-    price: Float16Array,
-    quantity: z.number()
+    price: z.string(),
+    quantity: z.string()
 })

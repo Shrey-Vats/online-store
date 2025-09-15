@@ -4,7 +4,7 @@ import { ParamsId } from "@/types/auth.type";
 
 export async function GET(req: NextRequest, { params }: ParamsId) {
   try {
-    const userId = params.id;
+    const userId = await params.id;
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -48,7 +48,7 @@ export async function GET(req: NextRequest, { params }: ParamsId) {
 export async function PUT(req: NextRequest, { params }: ParamsId) {
   try {
     const body = await req.json();
-    const userId = params.id;
+    const userId = await params.id;
 
     const { name } = body;
 
@@ -89,7 +89,7 @@ export async function PUT(req: NextRequest, { params }: ParamsId) {
 
 export async function DELECT({ params }: ParamsId) {
   try {
-    const userId = params.id;
+    const userId = await params.id;
 
     const user = await prisma.user.findUnique({
       where: { id: userId },

@@ -3,11 +3,12 @@ import prisma from "@/utils/db";
 import { signUpSchema } from "@/schemas/auth.schema";
 import bcrypt from "bcryptjs";
 
-export default async function POST(req: NextRequest, res: NextResponse) {
+export async function POST(req: NextRequest, res: NextResponse) {
   try {
       const body = await req.json()
     
     const result = signUpSchema.safeParse(body);
+
 
     const {name, email, phoneNum ,password } = body
 
@@ -21,7 +22,7 @@ export default async function POST(req: NextRequest, res: NextResponse) {
     const isPhoneNumAlreadyExits = await prisma.user.findUnique({
         where : {phoneNum}
     })
-
+ 
     if(isPhoneNumAlreadyExits){
        return NextResponse.json({
             success: false,

@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken"
 
-export default async function POST(req: NextRequest) {
+export async function POST(req: NextRequest) {
     try {
             const body = await req.json()
     const {email, password} = body;

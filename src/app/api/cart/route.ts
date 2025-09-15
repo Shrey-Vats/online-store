@@ -6,22 +6,30 @@ PUT /cart/items/:id → update quantity
 DELETE /cart/items/:id → remove product from cart
 DELETE /cart → clear cart
 */
-
+import jwt from "jsonwebtoken"
 import { jwtItems } from "@/types/auth.type";
 import prisma from "@/utils/db";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
-  const user: jwtItems = JSON.parse(req.headers.get("user")!);
+
+ const SECRET = process.env.SECRET || "";
+  const token = req.cookies.get("token")?.value;
+        
+  if (!token) {
+    return NextResponse.json(
+      { message: "Unauthorized: No token provided", success: false },
+      { status: 401 }
+    );
+  }
 
   try {
+
+    const user = jwt.verify(token, SECRET) as { id: string; [key: string]: any };
+
     const cart = await prisma.cart.findFirst({
-      where: {
-        userId: user.id,
-      },
-      select: {
-        cartItems: true,
-      },
+      where: { userId: user.id },
+      select: { cartItems: true },
     });
 
     if (!cart) {
@@ -44,7 +52,7 @@ export async function GET(req: NextRequest) {
     );
   } catch (error) {
     console.error(error);
-    NextResponse.json(
+    return NextResponse.json(
       {
         message: "Internal Server error",
         success: false,
@@ -55,16 +63,27 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const userDetails: jwtItems = JSON.parse(req.headers.get("user")!);
+  const SECRET = process.env.SECRET || "";
+  const token = req.cookies.get("token")?.value;
+        
+  if (!token) {
+    return NextResponse.json(
+      { message: "Unauthorized: No token provided", success: false },
+      { status: 401 }
+    );
+  }
 
-  let user = await prisma.cart.findFirst({
-    where: { userId: userDetails.id },
+  try {
+    const user = jwt.verify(token, SECRET) as { id: string; [key: string]: any };
+
+  let cart = await prisma.cart.findFirst({
+    where: { userId: user.id },
   });
 
-  if (!user) {
-    user = await prisma.cart.create({
+  if (!cart) {
+    cart = await prisma.cart.create({
       data: {
-        userId: userDetails.id,
+        userId: user.id,
       },
     });
   }
@@ -77,11 +96,24 @@ export async function POST(req: NextRequest) {
     },
     { status: 200 }
   );
+} catch {
+
+}
 }
 
 export async function DELECT(req: NextRequest) {
   try {
-    const user: jwtItems = JSON.parse(req.headers.get("user")!);
+  const SECRET = process.env.SECRET || "";
+  const token = req.cookies.get("token")?.value;
+        
+  if (!token) {
+    return NextResponse.json(
+      { message: "Unauthorized: No token provided", success: false },
+      { status: 401 }
+    );
+  }
+    const user = jwt.verify(token, SECRET) as { id: string; [key: string]: any };
+
 
     const cart = await prisma.cart.findFirst({
       where: {

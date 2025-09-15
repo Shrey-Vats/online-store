@@ -12,7 +12,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   try {
-    const allProduct = prisma.product.findMany();
+    const allProduct = await prisma.product.findMany();
 
     return NextResponse.json(
       {
@@ -74,8 +74,8 @@ export async function POST(req: NextRequest) {
              title,
              description,
              slug,
-             price,
-             quantity
+             price: parseFloat(price),
+             quantity: parseInt(quantity)
          }
         })
      

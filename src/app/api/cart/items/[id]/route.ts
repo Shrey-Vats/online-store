@@ -2,12 +2,10 @@
 PUT /cart/items/:id → update quantity
 DELETE /cart/items/:id → remove product from cart
 */
-
 import { ParamsId } from "@/types/auth.type";
 import prisma from "@/utils/db";
 import { NextRequest, NextResponse } from "next/server";
-import { success } from "zod";
-
+import jwt from "jsonwebtoken"
 export async function PUT(req: NextRequest, {params}: ParamsId) {
 
     const productId = params.id
@@ -52,17 +50,30 @@ export async function PUT(req: NextRequest, {params}: ParamsId) {
     }
 }
 
-export async function DELECT(req: NextRequest,{params}: ParamsId) {
-    const {id} = JSON.parse(req.headers.get("token")!)
-    const productId = params.id;
+export async function DELETE(req: NextRequest,{params}: ParamsId) {
+const SECRET = process.env.SECRET || "";
+  const token = req.cookies.get("token")?.value;
+        
+  if (!token) {
+    return NextResponse.json(
+      { message: "Unauthorized: No token provided", success: false },
+      { status: 401 }
+    );
+  }
 
-    try {
+  try {
+
+    const user = jwt.verify(token, SECRET) as { id: string; [key: string]: any };
+    const productId = await params.id;
+
+    console.log(productId)
         const cart = await prisma.cart.findFirst({
             where: {
-                userId: id
+                userId: user.id
             }
         })
 
+        console.log(cart)
         if(!cart){
             NextResponse.json({
                 message: "Cart do no exits",
@@ -75,6 +86,7 @@ export async function DELECT(req: NextRequest,{params}: ParamsId) {
                 cartId: cart?.id
             }
         })
+        console.log(product)
 
         if(!product){
             return NextResponse.json({
